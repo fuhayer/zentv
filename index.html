@@ -160,19 +160,19 @@ header{display:flex;align-items:center;gap:20px;padding:12px 24px;background:var
   <div class="hero">
     <h1>Yolcu<br><em>TV</em></h1>
     <p>Aracınızdaki yolcular için canlı kanallar, filmler ve diziler.</p>
-    <p class="hint">Sürüm 7</p>
+    <p class="hint">Sürüm 9</p>
   </div>
   <div class="formwrap">
     <form id="loginForm" autocomplete="off" novalidate onsubmit="return false">
       <label for="srv">Sunucu adresi
-        <span class="field"><input id="srv" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="http://ornek.com:8080"></span>
+        <span class="field"><input id="srv" name="iptv_adres" type="text" autocomplete="off" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="http://ornek.com:8080"></span>
         <span class="hint">Sağlayıcınızın verdiği adresi yazın. Tüm bağlantıyı yapıştırırsanız kullanıcı adı ve şifre kendiliğinden dolar.</span>
       </label>
       <label for="usr">Kullanıcı adı
-        <span class="field"><input id="usr" type="text" autocapitalize="off" autocorrect="off" spellcheck="false"></span>
+        <span class="field"><input id="usr" name="iptv_kullanici" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore autocapitalize="off" autocorrect="off" spellcheck="false"></span>
       </label>
       <label for="pwd">Şifre
-        <span class="field"><input id="pwd" type="password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="eye" id="eye" aria-label="Şifreyi göster">Göster</button></span>
+        <span class="field"><input id="pwd" name="iptv_sifre" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="eye" id="eye" aria-label="Şifreyi göster">Göster</button></span>
       </label>
       <label class="check" for="rem"><input id="rem" type="checkbox" checked> Bu araçta hatırla</label>
       <div class="msg" id="loginMsg" role="alert" aria-live="polite"></div>
@@ -459,8 +459,13 @@ function liveCands(x){
   const a = [b + '.m3u8', b + '.ts', S.base + '/' + cred() + '/' + enc(x.id)];
   return hlsFirst ? a : [a[1], a[0], a[2]];
 }
-const vodUrl = x => S.base + '/movie/' + cred() + '/' + enc(x.id) + '.' + (x.ext || 'mp4');
-const epUrl  = ep => S.base + '/series/' + cred() + '/' + enc(ep.id) + '.' + (ep.container_extension || 'mp4');
+function fileCands(kind, id, ext){
+  const own = String(ext || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+  const list = [own].concat(['m3u8', 'mp4'].filter(e => e !== own));
+  return list.map(e => S.base + '/' + kind + '/' + cred() + '/' + enc(id) + '.' + e);
+}
+const vodCands = x => fileCands('movie', x.id, x.ext);
+const epCands = ep => fileCands('series', ep.id, ep.container_extension);
 
 /* ================= Dizi ayrıntısı ================= */
 let D = { title:'', eps:[], seasons:[], season:null };
@@ -620,7 +625,7 @@ async function fail(text){
   const acts = [['Tekrar dene', () => attach(true)]];
   if (P.kind === 'live') acts.push(['Sonraki kanal', () => zap(1)]);
   acts.push(['Geri', closePlayer]);
-  pstate('error', (lf ? 'Oynatıcı bileşeni indirilemedi. Arabanın internet bağlantısı bu siteye izin vermiyor olabilir. Bu mesajı bana yazın.' : (mf ? 'Sunucu yayını veriyor ama tarayıcı bu yayını oynatamadı. Başka kanalları da deneyin.' : why(d))) + '\n\nTeknik ayrıntı: ' + dt + (sn ? ' | ' + sn : '') + ' | ' + envInfo(), acts);
+  pstate('error', (lf ? 'Oynatıcı bileşeni indirilemedi. Arabanın internet bağlantısı bu siteye izin vermiyor olabilir. Bu mesajı bana yazın.' : (/\.(mkv|avi)(\?|$)/i.test(P.cands[0]) ? 'Bu içerik MKV/AVI biçiminde. Safari ve araç tarayıcıları bu biçimi çoğunlukla açamıyor. Sağlayıcının m3u8 ve mp4 sürümleri de denendi ama açılmadı. Başka bir içerik deneyin.' : (mf ? 'Sunucu yayını veriyor ama tarayıcı bu yayını oynatamadı. Başka kanalları da deneyin.' : why(d)))) + '\n\nTeknik ayrıntı: ' + dt + (sn ? ' | ' + sn : '') + ' | ' + envInfo(), acts);
   wake(false);
 }
 
@@ -632,7 +637,7 @@ async function attach(fromStart){
   if (fromStart !== false) pstate('loading', 'Yükleniyor…');
   const url = candUrl(), isLive = P.kind === 'live';
   detail.push('yol' + (P.ci + 1) + ':' + ((url.match(/\.(m3u8|ts|mp4|mkv)(\?|$)/i) || [0,'düz'])[1]));
-  P.watchdog = setTimeout(() => { if (my === P.gen && !P.playingOnce) fail(); }, isLive ? 12000 : 40000);
+  P.watchdog = setTimeout(() => { if (my === P.gen && !P.playingOnce) fail(); }, isLive ? 12000 : 25000);
   const bad = () => my !== P.gen;
   try {
     if (/\.m3u8(\?|$)/i.test(url)) {
@@ -717,12 +722,12 @@ function zap(d){
   attach(); poke();
 }
 function playVod(x){
-  P.epIdx = -1; P.cands = [vodUrl(x)]; P.title = x.name;
+  P.epIdx = -1; P.cands = vodCands(x); P.title = x.name;
   openPlayer('vod', x.name); attach();
 }
 function playEpisode(i){
   const e = D.eps[i]; if (!e) return;
-  P.epIdx = i; P.cands = [epUrl(e)];
+  P.epIdx = i; P.cands = epCands(e);
   P.title = D.title + ' · ' + (e.season ? e.season + '. Sezon ' : '') + (e.num ? e.num + '. Bölüm' : '');
   closeDetail();
   openPlayer('episode', P.title); attach();
