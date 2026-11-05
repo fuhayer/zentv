@@ -1,243 +1,784 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZenTV Player</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #0b0f19; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Giriş Ekranı */
-        #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: radial-gradient(circle at center, #1e293b 0%, #0b0f19 100%); }
-        .login-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; }
-        .login-card h1 { font-size: 26px; margin-bottom: 8px; color: #fff; }
-        .login-card p { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
-        .input-group { margin-bottom: 16px; text-align: left; }
-        .input-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group input { width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s; }
-        .input-group input:focus { border-color: #6366f1; }
-        .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; margin-top: 10px; }
-        .btn-primary:hover { opacity: 0.9; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Yolcu TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Yerleşim: solda kategori listesi, ortada büyük dokunmatik kartlar, tam ekran oynatıcı katmanı.
+   Tesla ekranı için: büyük yazılar, 56px üstü dokunma alanları, üzerine gelme (hover) gerektirmez. */
+:root{
+  --bg:#080E11;
+  --panel:#0F181C;
+  --panel2:#15232A;
+  --line:#22343B;
+  --fg:#E8F1F2;
+  --mute:#8FA6AD;
+  --accent:#7BE0CB;
+  --accent-ink:#04261F;
+  --danger:#FF8A80;
+  --display:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--fg);font:500 20px/1.35 var(--body);
+  overflow:hidden;-webkit-user-select:none;user-select:none;overscroll-behavior:none;
+}
+input,button{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
 
-        /* Ana Uygulama Arayüzü */
-        #app-screen { display: none; height: 100vh; flex-direction: row; }
-        .sidebar { width: 380px; background: #111827; border-right: 1px solid #1f2937; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 15px 20px; border-bottom: 1px solid #1f2937; display: flex; gap: 10px; }
-        .tab-btn { flex: 1; padding: 10px; background: #1f2937; border: none; border-radius: 8px; color: #94a3b8; font-weight: 600; cursor: pointer; }
-        .tab-btn.active { background: #6366f1; color: #fff; }
-        
-        .category-container { padding: 12px 20px; border-bottom: 1px solid #1f2937; background: #1a2234; }
-        .category-container select { width: 100%; padding: 10px 12px; background: #0f172a; color: #fff; border: 1px solid #334155; border-radius: 8px; outline: none; font-size: 14px; cursor: pointer; }
+/* ---------- Giriş ---------- */
+#login{height:100%;display:grid;grid-template-columns:1.1fr 1fr;overflow:auto}
+.hero{padding:6vh 6vw;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;
+  background:
+    radial-gradient(1200px 600px at 0% 100%, rgba(123,224,203,.16), transparent 60%),
+    linear-gradient(180deg,#0A1317,#080E11)}
+.hero h1{font:700 clamp(48px,7vw,104px)/.95 var(--display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{margin:0;color:var(--mute);max-width:30ch;font-size:24px}
+.formwrap{display:flex;align-items:center;padding:6vh 5vw;background:var(--panel);border-left:1px solid var(--line)}
+form{width:100%;max-width:560px;display:grid;gap:18px;margin:auto}
+label{display:grid;gap:8px;font-size:17px;color:var(--mute);font-weight:600;letter-spacing:.02em}
+.field{display:flex;align-items:center;background:var(--bg);border:2px solid var(--line);border-radius:14px;min-height:64px}
+.field:focus-within{border-color:var(--accent)}
+.field input{flex:1;min-width:0;background:none;border:0;outline:0;padding:0 18px;height:60px;font-size:22px;-webkit-user-select:text;user-select:text}
+.field .eye{padding:0 18px;height:60px;color:var(--mute);font-size:16px;font-weight:600}
+.hint{font-size:16px;color:var(--mute);font-weight:500;letter-spacing:0}
+.check{display:flex;align-items:center;gap:14px;font-size:19px;color:var(--fg);font-weight:500;letter-spacing:0;min-height:56px}
+.check input{width:28px;height:28px;accent-color:var(--accent)}
+.btn{min-height:64px;padding:0 28px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:22px}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.6}
+.btn.ghost{background:var(--panel2);color:var(--fg);font-weight:600}
+.msg{min-height:1.4em;font-size:18px;color:var(--danger);line-height:1.4}
+.msg.ok{color:var(--accent)}
 
-        .content-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .item-row { padding: 12px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 14px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.15s; }
-        .item-row:hover, .item-row.active { background: #1f2937; color: #fff; }
+/* ---------- Uygulama ---------- */
+#app{height:100%;display:grid;grid-template-rows:auto 1fr}
+header{display:flex;align-items:center;gap:20px;padding:12px 24px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font:700 30px var(--display);letter-spacing:-.01em;white-space:nowrap}
+.brand em{font-style:normal;color:var(--accent)}
+.tabs{display:flex;gap:8px;background:var(--bg);padding:6px;border-radius:16px}
+.tab{min-height:56px;padding:0 24px;border-radius:12px;font-weight:600;color:var(--mute);white-space:nowrap}
+.tab[aria-selected=true]{background:var(--accent);color:var(--accent-ink)}
+.search{flex:1;min-width:120px}
+.search .field{min-height:60px}
+.search input{height:56px;font-size:20px}
+.who{display:flex;align-items:center;gap:14px;color:var(--mute);font-size:16px;white-space:nowrap}
+.who .btn{min-height:56px;font-size:18px;padding:0 20px}
 
-        /* Oynatıcı Alanı */
-        .player-container { flex: 1; background: #000; position: relative; display: flex; justify-content: center; align-items: center; }
-        video { width: 100%; height: 100%; outline: none; }
-        
-        /* Bilgi Overlay (Çözünürlük ve Ses) */
-        .stream-info-overlay { position: absolute; top: 20px; left: 20px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 12px; font-size: 13px; color: #e2e8f0; pointer-events: none; transition: opacity 0.5s; opacity: 0; z-index: 10; }
-        .stream-info-overlay.visible { opacity: 1; }
-        .stream-info-overlay b { color: #6366f1; }
+.body{display:grid;grid-template-columns:320px 1fr;min-height:0}
+#cats{overflow-y:auto;padding:14px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:6px;overscroll-behavior:contain}
+.cat{min-height:60px;padding:10px 16px;border-radius:12px;text-align:left;color:var(--fg);font-weight:500;line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cat[aria-current=true]{background:var(--panel2);box-shadow:inset 4px 0 0 var(--accent);font-weight:700}
+#main{overflow-y:auto;padding:22px 26px 60px;overscroll-behavior:contain}
+.count{color:var(--mute);font-size:17px;margin:0 0 16px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.grid.posters{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.card{display:flex;flex-direction:column;gap:10px;text-align:left;padding:12px;border-radius:16px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.card:active{background:var(--panel2);transform:scale(.99)}
+.ico,.pos{position:relative;display:grid;place-items:center;background:var(--bg);border-radius:12px;overflow:hidden}
+.ico{height:96px}
+.pos{aspect-ratio:2/3;width:100%}
+.ico img{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);object-fit:contain}
+.pos img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ico b,.pos b{font:700 34px var(--display);color:var(--line)}
+.nm{font-weight:600;font-size:19px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.sub{font-size:15px;color:var(--mute)}
+.state{display:grid;place-items:center;text-align:center;gap:18px;padding:12vh 20px;color:var(--mute);font-size:22px}
+.state .btn{min-width:220px}
+.spin{width:54px;height:54px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--accent);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
 
-        .error-banner { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none; }
-    </style>
+/* ---------- Dizi ayrıntısı ---------- */
+#detail{position:fixed;inset:0;z-index:30;background:rgba(4,8,10,.86);display:grid;place-items:center;padding:3vh 3vw}
+.sheet{width:min(1100px,100%);max-height:100%;display:grid;grid-template-rows:auto auto 1fr;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px;min-height:0}
+.sheet h2{font:700 34px/1.1 var(--display);margin:0}
+.sheet .top{display:flex;gap:18px;justify-content:space-between;align-items:flex-start}
+.plot{color:var(--mute);font-size:18px;max-height:4.2em;overflow:hidden;margin:8px 0 0}
+.seasons{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.chip{min-height:56px;padding:0 22px;border-radius:28px;background:var(--panel2);font-weight:600;white-space:nowrap}
+.chip[aria-selected=true]{background:var(--accent);color:var(--accent-ink)}
+.eps{overflow-y:auto;display:grid;gap:8px;align-content:start;min-height:0;overscroll-behavior:contain}
+.ep{display:flex;gap:16px;align-items:center;min-height:68px;padding:10px 18px;border-radius:14px;background:var(--bg);text-align:left;border:1px solid var(--line)}
+.ep:active{background:var(--panel2)}
+.ep .n{font:700 24px var(--display);color:var(--accent);min-width:2.2em}
+.ep .t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep .d{color:var(--mute);font-size:16px}
+
+/* ---------- Oynatıcı ---------- */
+#player{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center}
+#video{width:100%;height:100%;background:#000;object-fit:contain}
+.pbar{position:absolute;left:0;right:0;display:flex;align-items:center;gap:16px;padding:18px 24px;transition:opacity .25s}
+.pbar.t{top:0;background:linear-gradient(180deg,rgba(0,0,0,.75),transparent)}
+.pbar.b{bottom:0;justify-content:space-between;padding-bottom:28px;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent)}
+#player.idle .pbar{opacity:0;pointer-events:none}
+#player.idle{cursor:none}
+.ptitle{flex:1;min-width:0;font:700 28px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbtn{min-height:64px;padding:0 26px;border-radius:32px;background:rgba(20,30,34,.82);border:1px solid rgba(255,255,255,.18);font-weight:600;font-size:21px;white-space:nowrap}
+.pbtn:active{background:var(--accent);color:var(--accent-ink)}
+.pnow{flex:1;text-align:center;font-weight:600;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pstate{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:20px;text-align:center;padding:30px;pointer-events:none}
+#pstate>*{pointer-events:auto}
+#pstate .tx{white-space:pre-line;font-size:24px;max-width:40ch;text-shadow:0 2px 8px #000}
+#pstate .row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- Dar ekran (telefon denemesi) ---------- */
+@media (max-width:900px){
+  #login{grid-template-columns:1fr}
+  .hero{min-height:26vh;padding:4vh 6vw}
+  .hero p{font-size:18px}
+  header{flex-wrap:wrap;gap:10px;padding:10px 14px}
+  .who span{display:none}
+  .search{order:5;flex-basis:100%}
+  .body{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  #cats{flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);padding:10px}
+  .cat{flex:0 0 auto;min-width:130px;max-width:220px}
+  #main{padding:14px 14px 60px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .grid.posters{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .pbtn{min-height:56px;padding:0 16px;font-size:17px}
+  .ptitle{font-size:20px}
+}
+</style>
 </head>
 <body>
 
-    <!-- GİRİŞ EKRANI -->
-    <div id="login-screen">
-        <div class="login-card">
-            <h1>ZenTV Portal</h1>
-            <p>Xtream Codes bilgilerinizi girin</p>
-            <div id="login-error" class="error-banner"></div>
-            <div class="input-group">
-                <label>Portal URL</label>
-                <input type="text" id="url" placeholder="http://ornek.com:8080">
-            </div>
-            <div class="input-group">
-                <label>Kullanıcı Adı</label>
-                <input type="text" id="username" placeholder="Kullanıcı adınız">
-            </div>
-            <div class="input-group">
-                <label>Şifre</label>
-                <input type="password" id="password" placeholder="Şifreniz">
-            </div>
-            <button type="button" class="btn-primary" onclick="connectZenTV()">ZenTV'ye Bağlan</button>
-        </div>
+<!-- ===== Giriş ===== -->
+<section id="login">
+  <div class="hero">
+    <h1>Yolcu<br><em>TV</em></h1>
+    <p>Aracınızdaki yolcular için canlı kanallar, filmler ve diziler.</p>
+    <p class="hint">Sürüm 7</p>
+  </div>
+  <div class="formwrap">
+    <form id="loginForm" autocomplete="off" novalidate onsubmit="return false">
+      <label for="srv">Sunucu adresi
+        <span class="field"><input id="srv" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="http://ornek.com:8080"></span>
+        <span class="hint">Sağlayıcınızın verdiği adresi yazın. Tüm bağlantıyı yapıştırırsanız kullanıcı adı ve şifre kendiliğinden dolar.</span>
+      </label>
+      <label for="usr">Kullanıcı adı
+        <span class="field"><input id="usr" type="text" autocapitalize="off" autocorrect="off" spellcheck="false"></span>
+      </label>
+      <label for="pwd">Şifre
+        <span class="field"><input id="pwd" type="password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="eye" id="eye" aria-label="Şifreyi göster">Göster</button></span>
+      </label>
+      <label class="check" for="rem"><input id="rem" type="checkbox" checked> Bu araçta hatırla</label>
+      <div class="msg" id="loginMsg" role="alert" aria-live="polite"></div>
+      <button class="btn" id="loginBtn" type="submit">Giriş yap</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===== Uygulama ===== -->
+<section id="app" hidden>
+  <header>
+    <div class="brand">Yolcu <em>TV</em></div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="live">Canlı TV</button>
+      <button class="tab" role="tab" data-tab="vod">Filmler</button>
+      <button class="tab" role="tab" data-tab="series">Diziler</button>
     </div>
+    <div class="search"><span class="field"><input id="q" type="search" placeholder="Ara…" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Ara"></span></div>
+    <div class="who"><span id="exp"></span><button class="btn ghost" id="logout">Çıkış</button></div>
+  </header>
+  <div class="body">
+    <nav id="cats" aria-label="Kategoriler"></nav>
+    <main id="main"></main>
+  </div>
+</section>
 
-    <!-- ANA UYGULAMA EKRANI -->
-    <div id="app-screen">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <button type="button" class="tab-btn active" id="btn-live" onclick="switchTab('live')">Canlı Yayın</button>
-                <button type="button" class="tab-btn" id="btn-vod" onclick="switchTab('vod')">Filmler (VOD)</button>
-            </div>
-            <div class="category-container">
-                <select id="categorySelect" onchange="filterByCategory(this.value)">
-                    <option value="">Tüm Kategoriler</option>
-                </select>
-            </div>
-            <div class="content-list" id="content-list"></div>
-        </div>
-        <div class="player-container">
-            <div id="streamInfo" class="stream-info-overlay">
-                Çözünürlük: <b id="resVal">Hesaplanıyor...</b> | Ses Kanalı: <b id="audioVal">Stereo</b>
-            </div>
-            <video id="videoPlayer" controls autoplay></video>
-        </div>
+<!-- ===== Dizi ayrıntısı ===== -->
+<div id="detail" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="top">
+      <div><h2 id="dTitle"></h2><p class="plot" id="dPlot"></p></div>
+      <button class="btn ghost" id="dClose">Kapat</button>
     </div>
+    <div class="seasons" id="dSeasons"></div>
+    <div class="eps" id="dEps"></div>
+  </div>
+</div>
 
-    <script>
-        let serverUrl = "", user = "", pass = "", currentType = "live";
-        let liveCategories = [], liveStreams = [];
-        let vodCategories = [], vodStreams = [];
+<!-- ===== Oynatıcı ===== -->
+<div id="player" hidden>
+  <video id="video" playsinline autoplay></video>
+  <div class="pbar t">
+    <button class="pbtn" id="pBack">← Geri</button>
+    <div class="ptitle" id="pTitle"></div>
+    <button class="pbtn" id="pFs">Tam ekran</button>
+  </div>
+  <div class="pbar b" id="pLiveBar">
+    <button class="pbtn" id="pPrev">◀ Önceki kanal</button>
+    <div class="pnow" id="pNow"></div>
+    <button class="pbtn" id="pNext">Sonraki kanal ▶</button>
+  </div>
+  <div id="pstate" hidden></div>
+</div>
 
-        async function connectZenTV() {
-            serverUrl = document.getElementById('url').value.trim().replace(/\/+$/, '');
-            user = document.getElementById('username').value.trim();
-            pass = document.getElementById('password').value.trim();
-            const errDiv = document.getElementById('login-error');
+<script>
+window.addEventListener('error', function(e){ if (e.target && e.target !== window) return; var m = document.getElementById('loginMsg'); if (m) m.textContent = 'Sayfa hatası: ' + (e.message || 'bilinmeyen') + (e.lineno ? ' (satır ' + e.lineno + ')' : ''); });
+</script>
+<script>
+(() => {
+'use strict';
 
-            if (!serverUrl || !user || !pass) {
-                errDiv.style.display = 'block';
-                errDiv.innerText = "Lütfen tüm alanları doldurun.";
-                return;
-            }
+/* ================= Yardımcılar ================= */
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+  del(k){ try { localStorage.removeItem(k); } catch(e){} }
+};
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toArr = x => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
+const trLower = s => String(s || '').toLocaleLowerCase('tr');
+const initials = n => (String(n || '?').replace(/[^\p{L}\p{N} ]/gu,'').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('') || '?').toLocaleUpperCase('tr');
+const enc = encodeURIComponent;
 
-            try {
-                const apiURL = `${serverUrl}/player_api.php?username=${user}&password=${pass}`;
-                const res = await fetch(apiURL);
-                const data = await res.json();
-                if (data.user_info && data.user_info.auth === 1) {
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-screen').style.display = 'flex';
-                    loadContent('live');
-                } else {
-                    throw new Error("Giriş bilgileri geçersiz.");
-                }
-            } catch (e) {
-                errDiv.style.display = 'block';
-                errDiv.innerText = "Bağlantı kurulamadı. URL, şifre veya CORS/Mixed Content engeli olabilir.";
-            }
-        }
+/* ================= Durum ================= */
+const TABS = {
+  live:   { catAct:'get_live_categories',   listAct:'get_live_streams',  id:'stream_id', img:'stream_icon' },
+  vod:    { catAct:'get_vod_categories',    listAct:'get_vod_streams',   id:'stream_id', img:'stream_icon' },
+  series: { catAct:'get_series_categories', listAct:'get_series',        id:'series_id', img:'cover' }
+};
+const S = {
+  base:'', user:'', pass:'', formats:['m3u8','ts'],
+  tab:'live', catId:'all', cats:{}, cache:{}, view:[], shown:0, query:'', token:0
+};
+const CHUNK = 60;
 
-        async function loadContent(type) {
-            currentType = type;
-            document.getElementById('btn-live').classList.toggle('active', type === 'live');
-            document.getElementById('btn-vod').classList.toggle('active', type === 'vod');
-            const listEl = document.getElementById('content-list');
-            const catSelect = document.getElementById('categorySelect');
-            
-            listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">Yükleniyor...</div>';
-            catSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+/* ================= Ağ ================= */
+function parseServer(raw){
+  let t = String(raw || '').trim();
+  if (!t) throw new Error('Sunucu adresini yazın.');
+  if (!/^https?:\/\//i.test(t)) t = 'http://' + t;
+  let u;
+  try { u = new URL(t); } catch(e){ throw new Error('Sunucu adresi anlaşılamadı. Örnek: http://ornek.com:8080'); }
+  return { base: u.origin, user: u.searchParams.get('username') || '', pass: u.searchParams.get('password') || '' };
+}
 
-            const catAction = type === 'live' ? 'get_live_categories' : 'get_vod_categories';
-            const streamAction = type === 'live' ? 'get_live_streams' : 'get_vod_streams';
+async function getJSON(url, ms){
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms || 30000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal });
+    if (!r.ok) { const e = new Error('HTTP'); e.http = r.status; throw e; }
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e){ const x = new Error('BADJSON'); throw x; }
+  } finally { clearTimeout(timer); }
+}
 
-            try {
-                const catRes = await fetch(`${serverUrl}/player_api.php?username=${user}&password=${pass}&action=${catAction}`);
-                const catData = await catRes.json();
+function api(action, params){
+  const q = new URLSearchParams(Object.assign({ username:S.user, password:S.pass }, action ? { action } : {}, params || {}));
+  const bigList = /^get_(live_streams|vod_streams|series)$/.test(action || '') && !(params && params.category_id);
+  return getJSON(S.base + '/player_api.php?' + q.toString(), bigList ? 90000 : 30000);
+}
 
-                const streamRes = await fetch(`${serverUrl}/player_api.php?username=${user}&password=${pass}&action=${streamAction}`);
-                const streamData = await streamRes.json();
+function friendly(err){
+  if (err && err.name === 'AbortError') return 'Sunucu çok geç cevap verdi. İnternet bağlantısını kontrol edip tekrar deneyin.';
+  if (err && err.message === 'AUTH') return 'Kullanıcı adı veya şifre yanlış.';
+  if (err && /^STATUS:/.test(err.message)) return 'Aboneliğiniz şu anda aktif değil (' + err.message.slice(7) + '). Sağlayıcınızla görüşün.';
+  if (err && err.message === 'BADJSON') return 'Sunucu beklenmeyen bir cevap verdi. Adres doğru mu?';
+  if (err && err.http) return 'Sunucu hata verdi (kod ' + err.http + '). Adresi ve portu kontrol edin.';
+  if (err && err.message && !(err instanceof TypeError)) return err.message;
+  if (location.protocol === 'https:' && /^http:/i.test(S.base))
+    return 'Bu sayfa güvenli (https) bağlantıyla açıldı, ama sunucu adresiniz http ile başlıyor. Tarayıcı bunu engelliyor. Sağlayıcınızdan https ile başlayan bir adres isteyin ya da bu sayfayı http ile açın.';
+  return 'Sunucuya ulaşılamadı. Adresi, interneti ve sunucunun açık olduğunu kontrol edin. Sunucu başka sitelerden bağlanmaya izin vermiyor olabilir.';
+}
 
-                if (type === 'live') {
-                    liveCategories = Array.isArray(catData) ? catData : [];
-                    liveStreams = Array.isArray(streamData) ? streamData : [];
-                    populateCategories(liveCategories);
-                    renderList(liveStreams);
-                } else {
-                    vodCategories = Array.isArray(catData) ? catData : [];
-                    vodStreams = Array.isArray(streamData) ? streamData : [];
-                    populateCategories(vodCategories);
-                    renderList(vodStreams);
-                }
-            } catch (e) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#ef4444;">İçerikler yüklenemedi.</div>';
-                catSelect.innerHTML = '<option value="">Kategori yüklenemedi</option>';
-            }
-        }
+/* ================= Giriş ================= */
+const loginMsg = (t, ok) => { const m = $('#loginMsg'); m.textContent = t || ''; m.className = 'msg' + (ok ? ' ok' : ''); };
 
-        function populateCategories(categories) {
-            const catSelect = document.getElementById('categorySelect');
-            catSelect.innerHTML = '<option value="">Tüm Kategoriler</option>';
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat.category_id;
-                opt.innerText = cat.category_name;
-                catSelect.appendChild(opt);
-            });
-        }
+async function doLogin(base, user, pass, remember){
+  S.base = base; S.user = user; S.pass = pass;
+  const info = await api(null);
+  const ui = info && info.user_info;
+  if (!ui || Number(ui.auth) !== 1) throw new Error('AUTH');
+  if (ui.status && String(ui.status).toLowerCase() !== 'active') throw new Error('STATUS:' + ui.status);
+  const f = toArr(ui.allowed_output_formats).map(x => String(x).toLowerCase());
+  S.formats = f.length ? f : ['m3u8','ts'];
+  S.cats = {}; S.cache = {};
+  if (remember) store.set('yolcutv.cred', JSON.stringify({ base, user, pass })); else store.del('yolcutv.cred');
+  const exp = ui.exp_date ? Number(ui.exp_date) : 0;
+  $('#exp').textContent = exp ? 'Abonelik bitişi: ' + new Date(exp * 1000).toLocaleDateString('tr-TR') : '';
+  $('#login').hidden = true;
+  $('#app').hidden = false;
+  selectTab('live');
+}
 
-        function filterByCategory(catId) {
-            const streams = currentType === 'live' ? liveStreams : vodStreams;
-            if (!catId) {
-                renderList(streams);
-            } else {
-                const filtered = streams.filter(item => String(item.category_id) === String(catId));
-                renderList(filtered);
-            }
-        }
+$('#loginForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const btn = $('#loginBtn');
+  try {
+    const p = parseServer($('#srv').value);
+    const user = ($('#usr').value || p.user).trim();
+    const pass = $('#pwd').value || p.pass;
+    if (!user || !pass) throw new Error('Kullanıcı adı ve şifreyi yazın.');
+    if (p.user) $('#usr').value = user;
+    if (p.pass) $('#pwd').value = pass;
+    $('#srv').value = p.base;
+    btn.disabled = true; btn.textContent = 'Bağlanılıyor…';
+    loginMsg('');
+    await doLogin(p.base, user, pass, $('#rem').checked);
+  } catch(e){ loginMsg(friendly(e)); }
+  finally { btn.disabled = false; btn.textContent = 'Giriş yap'; }
+});
+$('#eye').addEventListener('click', () => {
+  const i = $('#pwd'); const show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  $('#eye').textContent = show ? 'Gizle' : 'Göster';
+});
+$('#logout').addEventListener('click', () => {
+  store.del('yolcutv.cred');
+  closePlayer(); closeDetail();
+  S.cache = {}; S.cats = {};
+  $('#app').hidden = true; $('#login').hidden = false;
+  $('#pwd').value = ''; loginMsg('');
+});
 
-        function renderList(items) {
-            const listEl = document.getElementById('content-list');
-            listEl.innerHTML = '';
-            if (!items || items.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">İçerik bulunamadı.</div>';
-                return;
-            }
-            items.slice(0, 200).forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item-row';
-                div.innerText = item.name || item.title;
-                div.onclick = () => playItem(item, currentType);
-                listEl.appendChild(div);
-            });
-        }
+/* ================= Sekmeler, kategoriler, liste ================= */
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) selectTab(b.dataset.tab); });
 
-        function playItem(item, type) {
-            const video = document.getElementById('videoPlayer');
-            const url = type === 'live' 
-                ? `${serverUrl}/live/${user}/${pass}/${item.stream_id}.ts`
-                : `${serverUrl}/movie/${user}/${pass}/${item.stream_id}.${item.container_extension || 'mp4'}`;
-            
-            video.src = url;
-            video.play();
-            showStreamInfo(video);
-        }
+async function selectTab(tab){
+  S.tab = tab; S.catId = 'all'; S.query = ''; $('#q').value = '';
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  $('#main').scrollTop = 0;
+  if (!S.cats[tab]) {
+    $('#cats').innerHTML = '';
+    mainState('loading', 'Kategoriler yükleniyor…');
+    try { S.cats[tab] = toArr(await api(TABS[tab].catAct)); }
+    catch(e){ mainState('error', friendly(e), () => selectTab(tab)); return; }
+  }
+  renderCats();
+  loadItems();
+}
 
-        function showStreamInfo(video) {
-            const infoOverlay = document.getElementById('streamInfo');
-            const resVal = document.getElementById('resVal');
-            const audioVal = document.getElementById('audioVal');
-            
-            infoOverlay.classList.add('visible');
+function renderCats(){
+  const cats = S.cats[S.tab] || [];
+  const all = [{ category_id:'all', category_name:'Tümü' }].concat(cats);
+  $('#cats').innerHTML = all.map(c =>
+    '<button class="cat" data-id="' + esc(c.category_id) + '" aria-current="' + (String(c.category_id) === String(S.catId)) + '">' + esc(c.category_name) + '</button>'
+  ).join('');
+}
+$('#cats').addEventListener('click', e => {
+  const b = e.target.closest('.cat'); if (!b) return;
+  S.catId = b.dataset.id; S.query = ''; $('#q').value = '';
+  renderCats(); $('#main').scrollTop = 0; loadItems();
+});
 
-            video.onloadedmetadata = () => {
-                const width = video.videoWidth || 1920;
-                const height = video.videoHeight || 1080;
-                resVal.innerText = `${width}x${height}`;
-                
-                if (video.audioTracks && video.audioTracks.length > 0) {
-                    audioVal.innerText = `${video.audioTracks.length} Kanal (Multitrack)`;
-                } else {
-                    audioVal.innerText = width >= 1280 ? "Stereo / 2.0" : "Mono";
-                }
+function mainState(kind, text, retry){
+  const m = $('#main');
+  m.innerHTML = '<div class="state">' + (kind === 'loading' ? '<div class="spin"></div>' : '') + '<div>' + esc(text) + '</div>' + (retry ? '<button class="btn" id="retryBtn">Tekrar dene</button>' : '') + '</div>';
+  if (retry) $('#retryBtn').addEventListener('click', retry);
+}
 
-                setTimeout(() => {
-                    infoOverlay.classList.remove('visible');
-                }, 5000);
-            };
-        }
+async function loadItems(){
+  const tab = S.tab, cat = S.catId, key = tab + ':' + cat, tok = ++S.token;
+  if (!S.cache[key]) {
+    mainState('loading', cat === 'all' ? 'Liste yükleniyor, büyük listelerde biraz sürebilir…' : 'Yükleniyor…');
+    try {
+      const T = TABS[tab];
+      const raw = toArr(await api(T.listAct, cat === 'all' ? {} : { category_id: cat }));
+      S.cache[key] = raw.map(r => ({
+        id: r[T.id], name: r.name || r.title || '', img: r[T.img] || r.stream_icon || r.cover || '',
+        ext: r.container_extension || '', rating: r.rating || r.rating_5based || '', num: r.num
+      })).filter(x => x.id != null && x.id !== '');
+    } catch(e){ if (tok === S.token) mainState('error', friendly(e), loadItems); return; }
+  }
+  if (tok !== S.token) return;
+  applyFilter();
+}
 
-        function switchTab(type) {
-            loadContent(type);
-        }
-    </script>
+let qTimer;
+$('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { S.query = $('#q').value; applyFilter(); }, 200); });
+
+function applyFilter(){
+  const all = S.cache[S.tab + ':' + S.catId] || [];
+  const q = trLower(S.query).trim();
+  S.view = q ? all.filter(x => trLower(x.name).indexOf(q) !== -1) : all;
+  S.shown = 0;
+  const poster = S.tab !== 'live';
+  const noun = S.tab === 'live' ? 'kanal' : (S.tab === 'vod' ? 'film' : 'dizi');
+  const m = $('#main');
+  if (!S.view.length) { mainState('none', q ? 'Aramanıza uyan ' + noun + ' bulunamadı.' : 'Bu kategoride içerik yok.'); return; }
+  m.innerHTML = '<p class="count">' + S.view.length.toLocaleString('tr-TR') + ' ' + noun + '</p><div class="grid' + (poster ? ' posters' : '') + '" id="grid"></div><div id="sentinel" style="height:2px"></div>';
+  fill();
+}
+
+function cardHTML(x, i){
+  const img = x.img ? '<img loading="lazy" decoding="async" alt="" src="' + esc(x.img) + '">' : '';
+  if (S.tab === 'live')
+    return '<button class="card" data-i="' + i + '"><span class="ico"><b>' + esc(initials(x.name)) + '</b>' + img + '</span><span class="nm">' + esc(x.name) + '</span></button>';
+  const r = parseFloat(x.rating);
+  return '<button class="card" data-i="' + i + '"><span class="pos"><b>' + esc(initials(x.name)) + '</b>' + img + '</span><span class="nm">' + esc(x.name) + '</span>' + (r > 0 ? '<span class="sub">★ ' + r.toFixed(1) + '</span>' : '') + '</button>';
+}
+
+function renderMore(){
+  const g = $('#grid'); if (!g || S.shown >= S.view.length) return false;
+  const end = Math.min(S.view.length, S.shown + CHUNK);
+  let h = ''; for (let i = S.shown; i < end; i++) h += cardHTML(S.view[i], i);
+  g.insertAdjacentHTML('beforeend', h);
+  S.shown = end; return true;
+}
+function fill(){
+  const s = $('#sentinel'); if (!s) return;
+  let guard = 0;
+  while (guard++ < 40 && S.shown < S.view.length) {
+    renderMore();
+    if (s.getBoundingClientRect().top > innerHeight + 700) break;
+  }
+}
+$('#main').addEventListener('scroll', () => { if (S.shown < S.view.length) fill(); }, { passive:true });
+document.addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.remove(); }, true);
+
+$('#main').addEventListener('click', e => {
+  const c = e.target.closest('.card'); if (!c) return;
+  const x = S.view[Number(c.dataset.i)]; if (!x) return;
+  if (S.tab === 'live') playLive(x, Number(c.dataset.i));
+  else if (S.tab === 'vod') playVod(x);
+  else openSeries(x);
+});
+
+/* ================= Adresler ================= */
+const cred = () => enc(S.user) + '/' + enc(S.pass);
+function liveCands(x){
+  const b = S.base + '/live/' + cred() + '/' + enc(x.id);
+  const hlsFirst = S.formats.indexOf('m3u8') !== -1 || S.formats.indexOf('ts') === -1;
+  const a = [b + '.m3u8', b + '.ts', S.base + '/' + cred() + '/' + enc(x.id)];
+  return hlsFirst ? a : [a[1], a[0], a[2]];
+}
+const vodUrl = x => S.base + '/movie/' + cred() + '/' + enc(x.id) + '.' + (x.ext || 'mp4');
+const epUrl  = ep => S.base + '/series/' + cred() + '/' + enc(ep.id) + '.' + (ep.container_extension || 'mp4');
+
+/* ================= Dizi ayrıntısı ================= */
+let D = { title:'', eps:[], seasons:[], season:null };
+async function openSeries(x){
+  $('#dTitle').textContent = x.name; $('#dPlot').textContent = '';
+  $('#dSeasons').innerHTML = ''; $('#dEps').innerHTML = '<div class="state"><div class="spin"></div><div>Bölümler yükleniyor…</div></div>';
+  $('#detail').hidden = false;
+  try {
+    const d = await api('get_series_info', { series_id: x.id });
+    const raw = d && d.episodes;
+    let list = [];
+    if (Array.isArray(raw)) raw.forEach(a => toArr(a).forEach(e => list.push(e)));
+    else Object.keys(raw || {}).forEach(k => toArr(raw[k]).forEach(e => { if (e.season == null) e.season = k; list.push(e); }));
+    list = list.filter(e => e && e.id != null).map(e => ({
+      id: e.id, season: Number(e.season) || 0, num: Number(e.episode_num) || 0,
+      title: e.title || '', container_extension: e.container_extension,
+      dur: e.info && (e.info.duration || '')
+    })).sort((a,b) => a.season - b.season || a.num - b.num);
+    D = { title: x.name, eps: list, seasons: [...new Set(list.map(e => e.season))], season: null };
+    D.season = D.seasons[0];
+    $('#dPlot').textContent = (d && d.info && d.info.plot) || '';
+    renderSeries();
+  } catch(e){
+    $('#dEps').innerHTML = '<div class="state"><div>' + esc(friendly(e)) + '</div><button class="btn" id="dRetry">Tekrar dene</button></div>';
+    $('#dRetry').addEventListener('click', () => openSeries(x));
+  }
+}
+function renderSeries(){
+  if (!D.eps.length) { $('#dSeasons').innerHTML = ''; $('#dEps').innerHTML = '<div class="state">Bu dizi için bölüm bulunamadı.</div>'; return; }
+  $('#dSeasons').innerHTML = D.seasons.length > 1 ? D.seasons.map(s => '<button class="chip" data-s="' + s + '" aria-selected="' + (s === D.season) + '">' + (s ? s + '. Sezon' : 'Bölümler') + '</button>').join('') : '';
+  $('#dEps').innerHTML = D.eps.map((e, i) => e.season === D.season ?
+    '<button class="ep" data-i="' + i + '"><span class="n">' + (e.num || '•') + '</span><span class="t">' + esc(e.title || (e.num + '. Bölüm')) + '</span><span class="d">' + esc(e.dur || '') + '</span></button>' : '').join('');
+}
+$('#dSeasons').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; D.season = Number(b.dataset.s); renderSeries(); });
+$('#dEps').addEventListener('click', e => { const b = e.target.closest('.ep'); if (b) playEpisode(Number(b.dataset.i)); });
+function closeDetail(){ $('#detail').hidden = true; }
+$('#dClose').addEventListener('click', closeDetail);
+$('#detail').addEventListener('click', e => { if (e.target.id === 'detail') closeDetail(); });
+
+/* ================= Oynatıcı ================= */
+const V = $('#video');
+const P = { kind:'', cands:[], ci:0, gen:0, title:'', live:[], idx:0, epIdx:-1, hls:null, mp:null, netRetry:0, mediaRetry:0, watchdog:0, idleTimer:0, playingOnce:false };
+const libs = {};
+function loadScript(urls){
+  const key = urls[0];
+  if (libs[key]) return libs[key];
+  libs[key] = new Promise((res, rej) => {
+    let i = 0;
+    const next = () => {
+      if (i >= urls.length) { delete libs[key]; rej(new Error('Oynatıcı bileşeni yüklenemedi. İnternet bağlantısını kontrol edin.')); return; }
+      const s = document.createElement('script'); s.src = urls[i++];
+      let done = false; const to = setTimeout(() => { if (!done) { done = true; s.remove(); next(); } }, 7000);
+      s.onload = () => { if (!done) { done = true; clearTimeout(to); res(); } };
+      s.onerror = () => { if (!done) { done = true; clearTimeout(to); s.remove(); next(); } };
+      document.head.appendChild(s);
+    };
+    next();
+  });
+  return libs[key];
+}
+const HLS_URLS = ['https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js', 'https://unpkg.com/hls.js@1.5.17/dist/hls.min.js'];
+const TS_URLS  = ['https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.js', 'https://unpkg.com/mpegts.js@1.7.3/dist/mpegts.js'];
+
+let tick = 0;
+function pstate(kind, text, actions){
+  const el = $('#pstate');
+  clearInterval(tick);
+  if (!kind) { el.hidden = true; el.innerHTML = ''; return; }
+  if (kind === 'loading') { const t0 = Date.now(); tick = setInterval(() => { const x = el.querySelector('.tx'); if (x) x.textContent = text + ' (' + Math.round((Date.now() - t0) / 1000) + ' sn)'; }, 1000); }
+  el.hidden = false;
+  el.innerHTML = (kind === 'loading' ? '<div class="spin"></div>' : '') + '<div class="tx">' + esc(text || '') + '</div>' +
+    (actions ? '<div class="row">' + actions.map((a, i) => '<button class="pbtn" data-a="' + i + '">' + esc(a[0]) + '</button>').join('') + '</div>' : '');
+  if (actions) el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => actions[Number(b.dataset.a)][1]()));
+}
+
+function stopEngine(){
+  clearTimeout(P.watchdog);
+  if (P.hls) { try { P.hls.destroy(); } catch(e){} P.hls = null; }
+  if (P.mp)  { try { P.mp.pause(); P.mp.unload(); P.mp.detachMediaElement(); P.mp.destroy(); } catch(e){} P.mp = null; }
+  P.stopAt = Date.now();
+  try { V.pause(); if (V.getAttribute('src')) { V.removeAttribute('src'); V.load(); } } catch(e){}
+}
+
+function tryPlay(){
+  const pr = V.play();
+  if (pr && pr.catch) pr.catch(e => {
+    if (e && e.name === 'NotAllowedError') { clearTimeout(P.watchdog); pstate('error', 'Başlatmak için dokunun.', [['▶ Oynat', () => { pstate(null); V.play().catch(() => {}); }]]); }
+  });
+}
+function candUrl(){ return P.cands[P.ci] || ''; }
+
+async function diagnose(url){
+  if (location.protocol === 'https:' && /^http:/i.test(url)) return { k:'mixed' };
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal });
+    ctl.abort();
+    return r.ok ? { k:'ok' } : { k:'http', code:r.status };
+  } catch(e){
+    try { const c2 = new AbortController(); const t2 = setTimeout(() => c2.abort(), 6000);
+      await fetch(url, { mode:'no-cors', signal:c2.signal }); clearTimeout(t2); c2.abort(); return { k:'cors' };
+    } catch(e2){ return { k:'net' }; }
+  } finally { clearTimeout(timer); }
+}
+function why(d){
+  if (d.k === 'mixed') return 'Sayfa güvenli (https) açıldı ama yayın adresi http ile başlıyor. Tarayıcı bunu engelliyor. Sağlayıcıdan https adresi isteyin.';
+  if (d.k === 'http' && (d.code === 401 || d.code === 403)) return 'Sunucu yayını vermedi (kod ' + d.code + '). Aynı hesap başka bir cihazda açık olabilir ya da abonelik bu yayına izin vermiyor.';
+  if (d.k === 'http' && d.code === 404) return 'Bu kanal sunucuda bulunamadı (kod 404). Başka bir kanal deneyin.';
+  if (d.k === 'http') return 'Sunucu hata verdi (kod ' + d.code + ').';
+  if (d.k === 'cors') return 'Sunucu var ve cevap veriyor, ama araç tarayıcısının yayını okumasına izin vermiyor. Bu sayfadan çözülemez, sunucu tarafı gerekir.';
+  if (d.k === 'ok') return 'Sunucu yayını veriyor ama araç tarayıcısı bu biçimi açamadı.';
+  return 'Sunucuya ulaşılamadı. İnternet bağlantısını kontrol edin.';
+}
+
+async function sniff(url){
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(url, { signal:ctl.signal });
+    const ct = (r.headers.get('content-type') || '?').split(';')[0];
+    let kind = 'okunamadı';
+    try {
+      const rd = r.body.getReader(); const { value } = await rd.read();
+      if (value && value.length) {
+        const txt = String.fromCharCode.apply(null, Array.from(value.slice(0, 7)));
+        kind = txt === '#EXTM3U' ? 'HLS listesi' : (value[0] === 0x47 ? 'TS yayını' : (txt.indexOf('<') === 0 ? 'web sayfası/hata' : 'bilinmeyen(' + value[0] + ')'));
+      }
+    } catch(e){}
+    ctl.abort();
+    return 'sunucu: ' + ct + ', ' + kind;
+  } catch(e){ return 'sunucu okunamadı'; } finally { clearTimeout(t); }
+}
+function envInfo(){
+  const mse = !!(window.MediaSource || window.ManagedMediaSource);
+  let hs = 'yok'; try { if (window.Hls) hs = Hls.isSupported(); } catch(e){}
+  let ms = 'yok'; try { if (window.mpegts) ms = mpegts.getFeatureList().mseLivePlayback; } catch(e){}
+  const nat = V.canPlayType('application/vnd.apple.mpegurl') ? 'evet' : 'hayır';
+  return 'MSE:' + mse + ' hls.js:' + hs + ' mpegts.js:' + ms + ' yerelHLS:' + nat;
+}
+let failing = false, libFail = false, mediaFail = false, detail = [];
+async function fail(text){
+  if (failing) return;
+  clearTimeout(P.watchdog);
+  if (P.ci + 1 < P.cands.length) {
+    P.ci++; stopEngine();
+    pstate('loading', 'Başka bağlantı yolu deneniyor (' + (P.ci + 1) + '/' + P.cands.length + ')');
+    attach(false); return;
+  }
+  failing = true;
+  stopEngine();
+  const lf = libFail, mf = mediaFail, dt = detail.slice(-8).join(' | '); libFail = false; mediaFail = false; detail = [];
+  pstate('loading', 'Sorunun nedeni araştırılıyor…');
+  let d; try { d = await diagnose(P.cands[0]); } catch(e){ d = { k:'net' }; }
+  let sn = ''; if (d.k === 'ok' || d.k === 'cors') { try { sn = await sniff(P.cands[0]); } catch(e){} }
+  failing = false;
+  if ($('#player').hidden) return;
+  const acts = [['Tekrar dene', () => attach(true)]];
+  if (P.kind === 'live') acts.push(['Sonraki kanal', () => zap(1)]);
+  acts.push(['Geri', closePlayer]);
+  pstate('error', (lf ? 'Oynatıcı bileşeni indirilemedi. Arabanın internet bağlantısı bu siteye izin vermiyor olabilir. Bu mesajı bana yazın.' : (mf ? 'Sunucu yayını veriyor ama tarayıcı bu yayını oynatamadı. Başka kanalları da deneyin.' : why(d))) + '\n\nTeknik ayrıntı: ' + dt + (sn ? ' | ' + sn : '') + ' | ' + envInfo(), acts);
+  wake(false);
+}
+
+async function attach(fromStart){
+  if (fromStart !== false) { P.ci = 0; detail = []; }
+  stopEngine();
+  P.netRetry = 0; P.mediaRetry = 0; P.playingOnce = false;
+  const my = ++P.gen;
+  if (fromStart !== false) pstate('loading', 'Yükleniyor…');
+  const url = candUrl(), isLive = P.kind === 'live';
+  detail.push('yol' + (P.ci + 1) + ':' + ((url.match(/\.(m3u8|ts|mp4|mkv)(\?|$)/i) || [0,'düz'])[1]));
+  P.watchdog = setTimeout(() => { if (my === P.gen && !P.playingOnce) fail(); }, isLive ? 12000 : 40000);
+  const bad = () => my !== P.gen;
+  try {
+    if (/\.m3u8(\?|$)/i.test(url)) {
+      pstate('loading', 'Oynatıcı bileşeni indiriliyor');
+      await loadScript(HLS_URLS).catch(e => { if (!V.canPlayType('application/vnd.apple.mpegurl')) throw e; });
+      if (bad()) return;
+      pstate('loading', 'Yayına bağlanılıyor (yol ' + (P.ci + 1) + '/' + P.cands.length + ')');
+      if (window.Hls && Hls.isSupported()) {
+        const h = new Hls({ capLevelToPlayerSize:true, backBufferLength:30, maxBufferLength:30, maxMaxBufferLength:60, enableWorker:true,
+          manifestLoadingMaxRetry:1, manifestLoadingRetryDelay:800, levelLoadingMaxRetry:2, fragLoadingMaxRetry:4, manifestLoadingTimeOut:10000 });
+        P.hls = h;
+        h.on(Hls.Events.ERROR, (_, d) => {
+          detail.push('hls:' + (d.details || d.type) + (d.error && d.error.message ? ' ' + d.error.message : '') + (d.fatal ? '' : ' (kurtarıldı)'));
+          if (!d.fatal || bad()) return;
+          if (d.type === Hls.ErrorTypes.NETWORK_ERROR && P.playingOnce && P.netRetry < 3) {
+            P.netRetry++; pstate('loading', 'Bağlantı yeniden deneniyor…');
+            setTimeout(() => { if (P.hls === h) h.startLoad(); }, 1000 * P.netRetry);
+          } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && P.mediaRetry < 2) {
+            P.mediaRetry++; h.recoverMediaError();
+          } else { if (d.type === Hls.ErrorTypes.MEDIA_ERROR) mediaFail = true; fail(); }
+        });
+        h.on(Hls.Events.MANIFEST_PARSED, () => { if (bad()) return; clearTimeout(P.watchdog); P.watchdog = setTimeout(() => { if (!bad() && !P.playingOnce) fail(); }, 20000); tryPlay(); });
+        h.loadSource(url); h.attachMedia(V);
+      } else { V.src = url; tryPlay(); }
+    } else if (isLive) {
+      pstate('loading', 'Oynatıcı bileşeni indiriliyor');
+      await loadScript(TS_URLS);
+      if (bad()) return;
+      pstate('loading', 'Yayına bağlanılıyor (yol ' + (P.ci + 1) + '/' + P.cands.length + ')');
+      if (!(window.mpegts && mpegts.getFeatureList().mseLivePlayback)) throw new Error('mse');
+      const mp = mpegts.createPlayer({ type:'mpegts', isLive:true, url }, { enableWorker:true, liveBufferLatencyChasing:true });
+      P.mp = mp;
+      mp.on(mpegts.Events.ERROR, (t, dt, info) => { detail.push('ts:' + t + ' ' + dt + (info && info.msg ? ' ' + info.msg : '')); if (!bad()) fail(); });
+      mp.attachMediaElement(V); mp.load(); tryPlay();
+    } else {
+      V.src = url; tryPlay();
+    }
+  } catch(e){ if (!bad()) { if (e && /yüklenemedi/.test(e.message || '')) { libFail = true; } fail(); } }
+}
+
+V.addEventListener('playing', () => { P.playingOnce = true; clearTimeout(P.watchdog); P.netRetry = 0; pstate(null); wake(true); poke(); });
+V.addEventListener('waiting', () => { if (P.playingOnce) { clearTimeout(V._w); V._w = setTimeout(() => { if (V.readyState < 3 && !V.paused) pstate('loading', 'Arabelleğe alınıyor…'); }, 700); } });
+V.addEventListener('loadeddata', () => { clearTimeout(P.watchdog); if (V.paused) tryPlay(); });
+V.addEventListener('canplay', () => { if (!V.paused) pstate(null); });
+V.addEventListener('pause', () => { if (P.kind !== 'live') poke(); });
+V.addEventListener('error', () => {
+  const c = V.error && V.error.code;
+  if (!V.getAttribute('src')) return;
+  if (Date.now() - (P.stopAt || 0) < 1500) return;
+  if (V.error && /empty src/i.test(V.error.message || '')) return;
+  detail.push('video:kod ' + c + (V.error && V.error.message ? ' ' + V.error.message : ''));
+  if (c === 3 || c === 4) mediaFail = true;
+  fail();
+});
+V.addEventListener('ended', () => {
+  if (P.kind === 'episode' && P.epIdx >= 0) {
+    const next = D.eps[P.epIdx + 1];
+    if (next) playEpisode(P.epIdx + 1);
+  }
+});
+
+function openPlayer(kind, title){
+  P.kind = kind;
+  $('#player').hidden = false;
+  $('#pTitle').textContent = title;
+  $('#pLiveBar').hidden = kind !== 'live';
+  V.controls = kind !== 'live';
+  poke();
+}
+function playLive(x, i){
+  P.live = S.view; P.idx = i; P.epIdx = -1;
+  P.cands = liveCands(x); P.title = x.name;
+  openPlayer('live', x.name); $('#pNow').textContent = (i + 1) + ' / ' + P.live.length;
+  attach(true);
+}
+function zap(d){
+  if (P.kind !== 'live' || !P.live.length) return;
+  P.idx = (P.idx + d + P.live.length) % P.live.length;
+  const x = P.live[P.idx];
+  P.cands = liveCands(x); P.title = x.name;
+  $('#pTitle').textContent = x.name; $('#pNow').textContent = (P.idx + 1) + ' / ' + P.live.length;
+  attach(); poke();
+}
+function playVod(x){
+  P.epIdx = -1; P.cands = [vodUrl(x)]; P.title = x.name;
+  openPlayer('vod', x.name); attach();
+}
+function playEpisode(i){
+  const e = D.eps[i]; if (!e) return;
+  P.epIdx = i; P.cands = [epUrl(e)];
+  P.title = D.title + ' · ' + (e.season ? e.season + '. Sezon ' : '') + (e.num ? e.num + '. Bölüm' : '');
+  closeDetail();
+  openPlayer('episode', P.title); attach();
+}
+function closePlayer(){
+  if ($('#player').hidden) return;
+  stopEngine(); pstate(null); wake(false);
+  if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
+  $('#player').hidden = true;
+  if (P.kind === 'episode' && $('#app').hidden === false) $('#detail').hidden = false;
+}
+$('#pBack').addEventListener('click', closePlayer);
+$('#pPrev').addEventListener('click', () => zap(-1));
+$('#pNext').addEventListener('click', () => zap(1));
+$('#pFs').addEventListener('click', () => {
+  const el = $('#player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen().catch(() => {}); } catch(e){}
+});
+
+/* Kontroller birkaç saniye sonra gizlenir; dokununca geri gelir */
+function poke(){
+  const pl = $('#player'); pl.classList.remove('idle');
+  clearTimeout(P.idleTimer);
+  P.idleTimer = setTimeout(() => { if (!V.paused || P.kind === 'live') pl.classList.add('idle'); }, 4500);
+}
+$('#player').addEventListener('pointerdown', poke);
+$('#player').addEventListener('pointermove', poke);
+
+/* Ekran uyumasın */
+let lock = null;
+async function wake(on){
+  try {
+    if (on && !lock && 'wakeLock' in navigator) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); }
+    else if (!on && lock) { await lock.release(); lock = null; }
+  } catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !$('#player').hidden && P.playingOnce) wake(true); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (!$('#player').hidden) closePlayer(); else if (!$('#detail').hidden) closeDetail(); }
+  else if (!$('#player').hidden && P.kind === 'live') { if (e.key === 'ArrowRight' || e.key === 'ChannelUp') zap(1); if (e.key === 'ArrowLeft' || e.key === 'ChannelDown') zap(-1); }
+});
+
+/* ================= Açılış: kayıtlı giriş ================= */
+(async () => {
+  let c = null;
+  try { c = JSON.parse(store.get('yolcutv.cred') || 'null'); } catch(e){}
+  if (!c || !c.base) return;
+  $('#srv').value = c.base; $('#usr').value = c.user || ''; $('#pwd').value = c.pass || '';
+  const btn = $('#loginBtn');
+  btn.disabled = true; btn.textContent = 'Bağlanılıyor…'; loginMsg('Kayıtlı bilgilerle bağlanılıyor…', true);
+  try { await doLogin(c.base, c.user, c.pass, true); }
+  catch(e){ loginMsg(friendly(e)); }
+  finally { btn.disabled = false; btn.textContent = 'Giriş yap'; }
+})();
+})();
+</script>
 </body>
 </html>
