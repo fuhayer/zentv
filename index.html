@@ -160,19 +160,19 @@ header{display:flex;align-items:center;gap:20px;padding:12px 24px;background:var
   <div class="hero">
     <h1>Yolcu<br><em>TV</em></h1>
     <p>Aracınızdaki yolcular için canlı kanallar, filmler ve diziler.</p>
-    <p class="hint">Sürüm 7</p>
+    <p class="hint">Sürüm 8</p>
   </div>
   <div class="formwrap">
     <form id="loginForm" autocomplete="off" novalidate onsubmit="return false">
       <label for="srv">Sunucu adresi
-        <span class="field"><input id="srv" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="http://ornek.com:8080"></span>
+        <span class="field"><input id="srv" name="iptv_adres" type="text" autocomplete="off" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="http://ornek.com:8080"></span>
         <span class="hint">Sağlayıcınızın verdiği adresi yazın. Tüm bağlantıyı yapıştırırsanız kullanıcı adı ve şifre kendiliğinden dolar.</span>
       </label>
       <label for="usr">Kullanıcı adı
-        <span class="field"><input id="usr" type="text" autocapitalize="off" autocorrect="off" spellcheck="false"></span>
+        <span class="field"><input id="usr" name="iptv_kullanici" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore autocapitalize="off" autocorrect="off" spellcheck="false"></span>
       </label>
       <label for="pwd">Şifre
-        <span class="field"><input id="pwd" type="password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="eye" id="eye" aria-label="Şifreyi göster">Göster</button></span>
+        <span class="field"><input id="pwd" name="iptv_sifre" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="eye" id="eye" aria-label="Şifreyi göster">Göster</button></span>
       </label>
       <label class="check" for="rem"><input id="rem" type="checkbox" checked> Bu araçta hatırla</label>
       <div class="msg" id="loginMsg" role="alert" aria-live="polite"></div>
